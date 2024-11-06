@@ -27,15 +27,18 @@ jobs:
         run: |
           sudo apt install -y unzip
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-          unzip cmdline-tools.zip -d $HOME/cmdline-tools
+          unzip cmdline-tools.zip -d $HOME/android-sdk
+          mkdir -p $HOME/android-sdk/cmdline-tools/latest
+          mv $HOME/android-sdk/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
           export ANDROID_SDK_ROOT=$HOME/android-sdk
-          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-          mv $HOME/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
-          export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin
+          export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
           yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "sources;android-31"
 
       - name: Build APK
+        env:
+          ANDROID_SDK_ROOT: $HOME/android-sdk
+          PATH: $PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
         run: |
           buildozer android debug
           cp ./bin/*.apk $GITHUB_WORKSPACE
