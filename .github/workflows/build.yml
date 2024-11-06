@@ -31,20 +31,21 @@ jobs:
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
           mkdir -p $HOME/android-sdk/cmdline-tools
           unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools/
+          mkdir -p $HOME/android-sdk/cmdline-tools/latest
           mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
           export ANDROID_SDK_ROOT=$HOME/android-sdk
           export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
           echo "Accepting Android SDK licenses..."
-          yes | sdkmanager --licenses
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
           echo "Installing required SDK packages..."
-          sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "sources;android-31"
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "sources;android-31"
           echo "Android SDK and tools installation completed."
 
       - name: Verify Installation
         run: |
           echo "Verifying Buildozer and SDK installations..."
           buildozer --version
-          sdkmanager --version
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --version || (echo "sdkmanager not found" && exit 1)
           echo "Verification complete."
 
       - name: Build APK
