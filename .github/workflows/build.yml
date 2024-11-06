@@ -19,28 +19,42 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt update
-          sudo apt install -y python3-pip openjdk-8-jdk libffi-dev
+          sudo apt update -y
+          sudo apt install -y python3-pip openjdk-8-jdk libffi-dev unzip
+          echo "Installing Buildozer and Cython..."
           pip install buildozer cython
+          echo "Buildozer and Cython installation completed."
 
       - name: Install Android SDK and Tools
         run: |
-          sudo apt install -y unzip
+          echo "Downloading Android SDK command-line tools..."
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-          unzip cmdline-tools.zip -d $HOME/android-sdk
-          mkdir -p $HOME/android-sdk/cmdline-tools/latest
-          mv $HOME/android-sdk/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools/
+          mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
           export ANDROID_SDK_ROOT=$HOME/android-sdk
           export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
+          echo "Accepting Android SDK licenses..."
           yes | sdkmanager --licenses
+          echo "Installing required SDK packages..."
           sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "sources;android-31"
+          echo "Android SDK and tools installation completed."
+
+      - name: Verify Installation
+        run: |
+          echo "Verifying Buildozer and SDK installations..."
+          buildozer --version
+          sdkmanager --version
+          echo "Verification complete."
 
       - name: Build APK
         env:
           ANDROID_SDK_ROOT: $HOME/android-sdk
           PATH: $PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
         run: |
-          buildozer android debug
+          echo "Starting APK build with Buildozer..."
+          buildozer android debug || (echo "Buildozer encountered an error" && exit 1)
+          echo "Build completed. Copying APK..."
           cp ./bin/*.apk $GITHUB_WORKSPACE
 
       - name: Upload APK
