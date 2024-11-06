@@ -23,39 +23,42 @@ jobs:
           sudo apt install -y python3-pip openjdk-8-jdk libffi-dev unzip
           echo "Installing Buildozer and Cython..."
           pip install buildozer cython
-          echo "Buildozer and Cython installation completed."
+          echo "Buildozer and Cython installed."
 
-      - name: Install Android SDK and Tools
+      - name: Install Android SDK Command-Line Tools
         run: |
           echo "Downloading Android SDK command-line tools..."
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
           mkdir -p $HOME/android-sdk/cmdline-tools
-          unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools/
+          unzip cmdline-tools.zip -d $HOME/android-sdk/
           mkdir -p $HOME/android-sdk/cmdline-tools/latest
           mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+          
           export ANDROID_SDK_ROOT=$HOME/android-sdk
           export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
-          echo "Accepting Android SDK licenses..."
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
-          echo "Installing required SDK packages..."
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "sources;android-31"
-          echo "Android SDK and tools installation completed."
 
-      - name: Verify Installation
+      - name: Install Android SDK Packages
+        env:
+          ANDROID_SDK_ROOT: $HOME/android-sdk
+          PATH: $PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
+        run: |
+          echo "Accepting SDK licenses and installing platform tools..."
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "sources;android-31"
+
+      - name: Verify Buildozer and SDK Installation
         run: |
           echo "Verifying Buildozer and SDK installations..."
           buildozer --version
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --version || (echo "sdkmanager not found" && exit 1)
-          echo "Verification complete."
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --version
 
       - name: Build APK
         env:
           ANDROID_SDK_ROOT: $HOME/android-sdk
           PATH: $PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
         run: |
-          echo "Starting APK build with Buildozer..."
-          buildozer android debug || (echo "Buildozer encountered an error" && exit 1)
-          echo "Build completed. Copying APK..."
+          echo "Building APK with Buildozer..."
+          buildozer android debug
           cp ./bin/*.apk $GITHUB_WORKSPACE
 
       - name: Upload APK
